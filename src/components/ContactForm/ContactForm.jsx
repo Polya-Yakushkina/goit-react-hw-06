@@ -1,8 +1,9 @@
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { useId } from "react";
+import { useDispatch } from "react-redux";
+import { addContact } from "../../redux/contactsSlice";
 import { nanoid } from 'nanoid';
 import * as Yup from "yup";
-import InputMask from "react-input-mask";
+import MaskedInput from "react-text-mask";
 
 import clsx from "clsx";
 import css from "./ContactForm.module.css";
@@ -23,51 +24,48 @@ const initialValues = {
     number: "",
 };
 
-export default function ContactForm({ onAdd }) {
-    const nameFieldId = useId();
-    const numberFieldId = useId();
+export default function ContactForm() {
+  const dispatch = useDispatch();
 
-    const handleSubmit = (values, actions) => {
-        const newContact = {
-            id: nanoid(),
-            name: values.name,
-            number: values.number
-        };
-
-        onAdd(newContact);
-        actions.resetForm();
+  const handleSubmit = (values, actions) => {
+    const newContact = {
+      id: nanoid(),
+      name: values.name,
+      number: values.number
     };
 
-    return (
-        <Formik
-            initialValues={initialValues}
-            onSubmit={handleSubmit}
-            validationSchema={ContactSchema}
-        >
-            <Form className={clsx(css.form)}>
-                <label htmlFor={nameFieldId} className={clsx(css.text)}>Name</label>
-                <Field
-                    className={clsx(css.input)}
-                    id={nameFieldId}
-                    type="text"
-                    name="name"
-                />
-                <ErrorMessage name="name" component="span" className={clsx(css.error)} />
+    dispatch(addContact(newContact));
+    actions.resetForm();
+  };
 
-                <label htmlFor={numberFieldId} className={clsx(css.text)}>Number</label>
-                <Field
-                    className={clsx(css.input)}
-                    id={numberFieldId}
-                    type="text"
-                    name="number"
-                    as={InputMask}
-                    mask="999-99-99"
-                    placeholder="XXX-XX-XX"
-                />
-                <ErrorMessage name="number" component="span" className={clsx(css.error)} />
+  return (
+    <Formik
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+      validationSchema={ContactSchema}
+    >
+      <Form className={clsx(css.form)}>
+        <label htmlFor="name" className={clsx(css.text)}>Name</label>
+        <Field className={clsx(css.input)} id="name" type="text" name="name" />
+        <ErrorMessage name="name" component="span" className={clsx(css.error)} />
 
-                <button type="submit" className={clsx(css.btn)}>Add contact</button>
-            </Form>
-        </Formik>
-    )
+        <label htmlFor="number" className={clsx(css.text)}>Number</label>
+        <Field name="number">
+          {({ field }) => (
+            <MaskedInput
+              {...field}
+              mask={[/\d/, /\d/, /\d/, '-', /\d/, /\d/, '-', /\d/, /\d/]}
+
+              placeholder="XXX-XX-XX"
+              className={clsx(css.input)}
+              id="number"
+            />
+          )}
+        </Field>
+        <ErrorMessage name="number" component="span" className={clsx(css.error)} />
+
+        <button type="submit" className={clsx(css.btn)}>Add contact</button>
+      </Form>
+    </Formik>
+  );
 }
